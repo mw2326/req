@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { getBrowserSupabase } from '@/lib/supabase-browser';
 
 type Posting = {
   id: string;
@@ -39,18 +41,27 @@ function normSkill(s: string) {
   return s.trim().toLowerCase();
 }
 
-function loadProfile(): Profile {
-  if (typeof window === 'undefined') return { mySkills: [], dreamCompany: '' };
+async function loadProfile(): Promise<Profile> {
   try {
-    const raw = localStorage.getItem('req_profile');
-    return raw ? JSON.parse(raw) : { mySkills: [], dreamCompany: '' };
+    const res = await fetch('/api/profile');
+    if (!res.ok) return { mySkills: [], dreamCompany: '' };
+    const data = await res.json();
+    return { mySkills: data.mySkills ?? [], dreamCompany: data.dreamCompany ?? '' };
   } catch {
     return { mySkills: [], dreamCompany: '' };
   }
 }
 
-function saveProfile(p: Profile) {
-  localStorage.setItem('req_profile', JSON.stringify(p));
+async function saveProfile(p: Profile) {
+  try {
+    await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p),
+    });
+  } catch {
+    // best-effort; local state already updated optimistically
+  }
 }
 
 function Chip({ children, tone = 'default' }: { children: React.ReactNode; tone?: 'default' | 'match' | 'gap' }) {
@@ -77,6 +88,7 @@ function Empty({ title, body }: { title: string; body: string }) {
 }
 
 export default function Page() {
+  const router = useRouter();
   const [tab, setTab] = useState<(typeof TABS)[number]['id']>('add');
   const [dbCount, setDbCount] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -115,16 +127,21 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    const p = loadProfile();
-    setProfile(p);
-    setDreamInput(p.dreamCompany || '');
+    (async () => {
+      const p = await loadProfile();
+      setProfile(p);
+      setDreamInput(p.dreamCompany || '');
+      if (p.dreamCompany) loadDreamPostings(p.dreamCompany);
+    })();
     refreshCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshCount]);
 
-  useEffect(() => {
-    if (profile.dreamCompany) loadDreamPostings(profile.dreamCompany);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  async function signOut() {
+    const supabase = getBrowserSupabase();
+    await supabase.auth.signOut();
+    router.push('/login');
+  }
 
   async function handleScan() {
     if (!jdText.trim()) {
@@ -276,8 +293,16 @@ export default function Page() {
             </div>
             <div className="font-mono text-xs text-ink2">// requirement intelligence, crowdsourced</div>
           </div>
-          <div className="font-mono text-[11px] text-ink2">
-            {dbCount === null ? '—' : dbCount} posting{dbCount === 1 ? '' : 's'} tracked
+          <div className="flex items-center gap-3.5">
+            <div className="font-mono text-[11px] text-ink2">
+              {dbCount === null ? '—' : dbCount} posting{dbCount === 1 ? '' : 's'} tracked
+            </div>
+            <button
+              onClick={signOut}
+              className="font-mono text-[11px] uppercase text-ink2 hover:text-white border border-hairline rounded px-2.5 py-1"
+            >
+              Sign out
+            </button>
           </div>
         </div>
 

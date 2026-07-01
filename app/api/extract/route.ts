@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callGroq } from '@/lib/groq';
+import { getUser } from '@/lib/supabase-server';
+import { checkRateLimit, getGroqLimiter } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getUser();
+    if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+    const { success } = await checkRateLimit(getGroqLimiter(), user.id);
+    if (!success) {
+      return NextResponse.json({ error: 'Rate limit exceeded — try again later.' }, { status: 429 });
+    }
+
     const { text } = await req.json();
     if (!text || typeof text !== 'string' || !text.trim()) {
       return NextResponse.json({ error: 'Missing job posting text.' }, { status: 400 });
