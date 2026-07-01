@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isAdmin } from '@/lib/admin';
 
 const PUBLIC_PATHS = ['/login', '/auth/callback'];
 
@@ -40,6 +41,10 @@ export async function middleware(req: NextRequest) {
   }
 
   if (user && req.nextUrl.pathname === '/login') {
+    return NextResponse.redirect(new URL('/', req.url));
+  }
+
+  if (req.nextUrl.pathname.startsWith('/admin') && !isAdmin(user?.email)) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 

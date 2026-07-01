@@ -201,6 +201,16 @@ export default function Page() {
     }
   }
 
+  async function reportPosting(id: string) {
+    try {
+      const res = await fetch(`/api/postings/${id}/report`, { method: 'POST' });
+      if (!res.ok) throw new Error();
+      showToast('Reported — thanks, a moderator will review it');
+    } catch {
+      showToast('Could not report posting — try again');
+    }
+  }
+
   async function loadDreamPostings(company: string) {
     try {
       const res = await fetch(`/api/postings?company=${encodeURIComponent(company)}`);
@@ -452,8 +462,16 @@ export default function Page() {
                         <span className="font-display font-semibold text-[15px]">{p.company}</span>
                         <span className="text-ink2 text-[12.5px]"> &nbsp; {p.role}</span>
                       </div>
-                      <div className="font-mono text-[10.5px] text-[#565d6b]">
-                        REQ-{p.id.slice(0, 6).toUpperCase()}
+                      <div className="flex items-center gap-2.5">
+                        <div className="font-mono text-[10.5px] text-[#565d6b]">
+                          REQ-{p.id.slice(0, 6).toUpperCase()}
+                        </div>
+                        <button
+                          onClick={() => reportPosting(p.id)}
+                          className="font-mono text-[10px] uppercase text-ink2 hover:text-coral"
+                        >
+                          Report
+                        </button>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
