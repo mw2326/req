@@ -19,3 +19,40 @@ create index if not exists postings_skills_idx on postings using gin (skills);
 -- stays private from direct client access while still being readable/
 -- writable through your own API.
 alter table postings enable row level security;
+
+-- Restrict signups to .edu email addresses. Fires on every new row in
+-- auth.users, which covers both magic-link and Google OAuth first-time
+-- sign-in (both create a user row on first auth) — so this is the single
+-- enforcement point regardless of provider. A non-.edu Google account never
+-- gets created and the auth call fails with this message.
+create or replace function public.enforce_edu_email()
+returns trigger as $$
+begin
+  if new.email !~* '\.edu$' then
+    raise exception 'Only .edu email addresses are allowed.';
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists enforce_edu_email_trigger on auth.users;
+create trigger enforce_edu_email_trigger
+  before insert on auth.users
+  for each row execute function public.enforce_edu_email();
+
+-- Per-account profile: replaces the old localStorage-only "your skills" /
+-- "dream company" state now that there's real auth. RLS scopes each row to
+-- its owner so the browser-facing (anon key) client can read/write its own
+-- profile directly without going through the service-role key.
+create table if not exists profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  my_skills text[] not null default '{}',
+  dream_company text not null default '',
+  updated_at timestamptz not null default now()
+);
+
+alter table profiles enable row level security;
+
+drop policy if exists "users manage own profile" on profiles;
+create policy "users manage own profile" on profiles
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

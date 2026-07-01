@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
+import { getUser } from '@/lib/supabase-server';
+import { checkRateLimit, getPostLimiter } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
@@ -36,6 +38,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getUser();
+    if (!user) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+
+    const { success } = await checkRateLimit(getPostLimiter(), user.id);
+    if (!success) {
+      return NextResponse.json({ error: 'Rate limit exceeded — try again later.' }, { status: 429 });
+    }
+
     const { company, role, skills, rawText } = await req.json();
     if (!company || !role || !Array.isArray(skills)) {
       return NextResponse.json({ error: 'Missing company, role, or skills.' }, { status: 400 });
