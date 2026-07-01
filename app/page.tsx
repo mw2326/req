@@ -33,7 +33,7 @@ function highlight(text: string, skills: string[]) {
   const sorted = [...skills].sort((a, b) => b.length - a.length).filter((s) => s.trim().length > 1);
   if (!sorted.length) return out;
   const pattern = sorted.map(escapeRegex).join('|');
-  const re = new RegExp(`(${pattern})`, 'gi');
+  const re = new RegExp(`(?<![A-Za-z0-9])(${pattern})(?![A-Za-z0-9])`, 'gi');
   return out.replace(re, '<mark class="kw">$1</mark>');
 }
 
