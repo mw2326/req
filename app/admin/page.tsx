@@ -56,7 +56,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-ink text-white">
-      <div className="max-w-[980px] mx-auto px-5 pt-7 pb-20">
+      <div className="max-w-[1470px] mx-auto px-5 pt-7 pb-20">
         <h1 className="font-display font-semibold text-[19px] mb-1">Moderation</h1>
         <p className="text-ink2 text-[13.5px] leading-relaxed mb-6">
           Postings sorted by report count. Removing hides a posting from Search / Dream Company; it's reversible.

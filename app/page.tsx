@@ -294,7 +294,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-ink text-white">
-      <div className="max-w-[980px] mx-auto px-5 pt-7 pb-20">
+      <div className="max-w-[1470px] mx-auto px-5 pt-7 pb-20">
         {/* header */}
         <div className="flex items-baseline justify-between flex-wrap gap-2.5 mb-6">
           <div className="flex items-baseline gap-2.5">
