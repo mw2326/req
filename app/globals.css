@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #12151b;
+  color: #edeef0;
+}
+
+mark.kw {
+  background: #ffc93c;
+  color: #14161b;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c313c;
+  border-radius: 4px;
+}
