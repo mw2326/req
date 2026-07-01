@@ -9,7 +9,12 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get('q')?.trim();
     const company = req.nextUrl.searchParams.get('company')?.trim();
 
-    let query = supabase.from('postings').select('*').order('created_at', { ascending: false }).limit(200);
+    let query = supabase
+      .from('postings')
+      .select('*')
+      .eq('status', 'visible')
+      .order('created_at', { ascending: false })
+      .limit(200);
 
     if (company) {
       query = query.ilike('company', `%${company}%`);
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from('postings')
-      .insert({ company, role, skills, raw_text: (rawText ?? '').slice(0, 4000) })
+      .insert({ company, role, skills, raw_text: (rawText ?? '').slice(0, 4000), user_id: user.id })
       .select()
       .single();
 

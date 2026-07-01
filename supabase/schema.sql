@@ -56,3 +56,24 @@ alter table profiles enable row level security;
 drop policy if exists "users manage own profile" on profiles;
 create policy "users manage own profile" on profiles
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Attribution + moderation state on postings. user_id lets an admin trace a
+-- posting back to the account that added it; status lets a posting be
+-- hidden (soft-removed) without losing the row, so it's reversible.
+alter table postings add column if not exists user_id uuid references auth.users(id) on delete set null;
+alter table postings add column if not exists status text not null default 'visible' check (status in ('visible', 'removed'));
+
+-- One row per report. The unique constraint stops a single user from
+-- spamming reports on the same posting to inflate its visibility to admins.
+create table if not exists reports (
+  id uuid primary key default gen_random_uuid(),
+  posting_id uuid not null references postings(id) on delete cascade,
+  reporter_id uuid not null references auth.users(id) on delete cascade,
+  reason text,
+  created_at timestamptz not null default now(),
+  unique (posting_id, reporter_id)
+);
+
+alter table reports enable row level security;
+-- No policies: reports/postings moderation always goes through server
+-- routes using the service-role client, same pattern as postings itself.
