@@ -79,14 +79,14 @@ export default function AdminPage() {
                   {p.status === 'visible' ? (
                     <button
                       onClick={() => setStatus(p.id, 'removed')}
-                      className="font-mono text-[11px] uppercase border border-coral text-coral px-3 py-1.5 rounded"
+                      className="font-mono text-[11px] uppercase border border-coral text-coral px-4.5 py-1.5 rounded"
                     >
                       Remove
                     </button>
                   ) : (
                     <button
                       onClick={() => setStatus(p.id, 'visible')}
-                      className="font-mono text-[11px] uppercase border border-teal text-teal px-3 py-1.5 rounded"
+                      className="font-mono text-[11px] uppercase border border-teal text-teal px-4.5 py-1.5 rounded"
                     >
                       Restore
                     </button>
