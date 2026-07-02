@@ -10,6 +10,25 @@ Stack: Next.js 14 (App Router) + Tailwind, Groq (free LLM API) for extraction, S
 (Postgres + Auth) for the shared postings database and `.edu`-gated accounts, Upstash Redis
 for rate limiting, deployed on Vercel.
 
+## Tech stack
+
+- **Next.js 14 (App Router) + TypeScript** — full-stack framework; client components for
+  the interactive pages, server-only Route Handlers for every API call that touches a
+  secret (Groq key, Supabase service role key)
+- **Tailwind CSS** — hand-styled dark UI, no component library
+- **Supabase**
+  - **Postgres** — the shared `postings` table plus `profiles` and `reports`
+  - **Auth** — `.edu`-gated sign-in via magic link and Google OAuth, enforced by a
+    Postgres trigger on `auth.users` so it applies regardless of provider
+  - **Row Level Security** — scopes each user's `profiles` row to themselves
+  - `@supabase/ssr` — cookie-based session handling across middleware, Server Components,
+    and Route Handlers
+- **Groq** (`llama-3.3-70b-versatile`) — extracts `{company, role, skills}` from pasted job
+  postings and generates project ideas that close a skill gap
+- **Upstash Redis + `@upstash/ratelimit`** — per-user sliding-window rate limiting on the
+  Groq-calling routes and posting creation
+- **Vercel** — hosting, deploys on push to `main`, edge middleware for the auth/admin gate
+
 ## Local development
 
 ```bash
