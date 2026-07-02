@@ -95,7 +95,7 @@ function LoginForm() {
               <button
                 onClick={sendMagicLink}
                 disabled={loading}
-                className="w-full font-mono text-[12.5px] uppercase tracking-wide bg-amber text-[#14161b] font-semibold px-4 py-2.5 rounded disabled:opacity-40"
+                className="w-full font-mono text-[12.5px] uppercase tracking-wide bg-amber text-[#14161b] font-semibold px-6 py-2.5 rounded disabled:opacity-40"
               >
                 Send magic link
               </button>
@@ -108,7 +108,7 @@ function LoginForm() {
 
               <button
                 onClick={signInWithGoogle}
-                className="w-full font-mono text-[12.5px] uppercase tracking-wide border border-hairline px-4 py-2.5 rounded hover:border-ink2 flex items-center justify-center gap-2.5"
+                className="w-full font-mono text-[12.5px] uppercase tracking-wide border border-hairline px-6 py-2.5 rounded hover:border-ink2 flex items-center justify-center gap-2.5"
               >
                 <svg width="15" height="15" viewBox="0 0 18 18" aria-hidden="true">
                   <path
@@ -137,7 +137,7 @@ function LoginForm() {
           )}
 
           {error && (
-            <div className="mt-3.5 font-mono text-[12px] text-coral border border-coral/40 rounded px-3 py-2">
+            <div className="mt-3.5 font-mono text-[12px] text-coral border border-coral/40 rounded px-4 py-2.5">
               {error}
             </div>
           )}
