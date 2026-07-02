@@ -4,110 +4,42 @@ Paste internship/job postings, extract real screenable requirements, search what
 actually ask for, and track the skill gap to your dream company — with AI-generated project
 ideas that close it.
 
+**Live at [tryreq.com](https://tryreq.com)** — `.edu` email required (magic link or Google).
+
 Stack: Next.js 14 (App Router) + Tailwind, Groq (free LLM API) for extraction, Supabase
-(free Postgres) for the shared postings database.
+(Postgres + Auth) for the shared postings database and `.edu`-gated accounts, Upstash Redis
+for rate limiting, deployed on Vercel.
 
-## 1. Get a free Groq API key
-
-1. Go to https://console.groq.com/keys
-2. Sign up (no credit card needed) and create an API key
-3. Copy it — you'll paste it into `.env.local` below
-
-Groq's free tier is generous and fast; this app uses `llama-3.3-70b-versatile`, which is
-plenty capable for extraction and short project suggestions.
-
-## 2. Create a free Supabase project
-
-1. Go to https://supabase.com and create a new project (free tier)
-2. Once it's ready, open **SQL Editor** in the sidebar, paste the contents of
-   `supabase/schema.sql` from this repo, and run it — this creates the `postings`,
-   `profiles`, and `reports` tables, a Postgres trigger that rejects any signup whose email
-   doesn't end in `.edu` (covers both magic-link and Google sign-in), and the
-   attribution/moderation columns on `postings`
-3. Go to **Project Settings > API** and copy:
-   - **Project URL** → `SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL` (same value, two vars)
-   - **service_role key** (not the anon key) → `SUPABASE_SERVICE_ROLE_KEY`
-   - **anon / public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-The service role key is only ever used server-side (for the shared `postings` table),
-never sent to the browser. The anon key powers auth and each user's own `profiles` row,
-protected by row-level security — that one's meant to be public, same as any Supabase
-frontend app.
-
-4. Enable email (magic link) sign-in: **Authentication > Providers > Email** should already
-   be on by default.
-5. Enable Google sign-in: **Authentication > Providers > Google**, toggle it on, and paste
-   in a Google OAuth Client ID + Secret. Create those at
-   https://console.cloud.google.com/apis/credentials (OAuth client type "Web application"),
-   with the authorized redirect URI shown in the Supabase Google provider panel (it's your
-   Supabase project's `.../auth/v1/callback` URL). Note that Google sign-in only *narrows*
-   who can complete OAuth — the actual `.edu` check happens in the database trigger from
-   step 2, so a non-`.edu` Google account will authenticate with Google but then fail to
-   create a REQ account.
-
-## 3. Create a free Upstash Redis database (rate limiting)
-
-1. Go to https://console.upstash.com and create a new Redis database (free tier, no card)
-2. Copy the **REST URL** and **REST Token** from the database details page →
-   `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
-
-This rate-limits `/api/extract`, `/api/projects` (10 requests/hour/user — both call Groq),
-and posting creation (30/hour/user). If you skip this step, rate limiting is silently
-skipped rather than breaking local dev — but set it up before any real traffic.
-
-## 4. Moderation (report + admin removal)
-
-Every posting is tied to the account that added it, and any signed-in user can report a
-posting from the Search tab. Reports don't auto-remove anything — you review them at
-`/admin` and choose to remove (or restore) a posting.
-
-Set `ADMIN_EMAILS` in `.env.local` to a comma-separated list of `.edu` addresses that
-should have access to `/admin` (e.g. your own). Leave it blank to disable admin access
-entirely.
-
-## 5. Local setup
+## Local development
 
 ```bash
 cp .env.example .env.local
-# fill in .env.local: GROQ_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
-# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN, ADMIN_EMAILS
-
+# fill in .env.local — see below for what each var is for
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — you'll be redirected to `/login`. Sign in with a `.edu`
-email (magic link) or a `.edu` Google account to reach the dashboard.
+Open http://localhost:3000 — signed-out visitors land on the public landing page; the app
+itself lives at `/dashboard` and requires a `.edu` sign-in.
 
-## 6. Deploy to Vercel (free)
+Env vars (see `.env.example` for the full list with comments):
+- `GROQ_API_KEY` — LLM extraction/project-idea generation
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — shared `postings` table (server-side only)
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — auth + per-user `profiles`
+- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — rate limiting (optional locally;
+  silently skipped if unset)
+- `ADMIN_EMAILS` — comma-separated `.edu` addresses allowed at `/admin`
 
-```bash
-npm i -g vercel   # if you don't have it
-vercel
-```
-
-Or push this folder to a GitHub repo and import it at https://vercel.com/new.
-
-Either way, once the project exists on Vercel, go to **Project Settings > Environment
-Variables** and add all eight variables from `.env.local`:
-- `GROQ_API_KEY`
-- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-- `ADMIN_EMAILS`
-
-Redeploy after adding them (Vercel will prompt you, or run `vercel --prod`). Also add your
-production URL's `/auth/callback` (e.g. `https://your-app.vercel.app/auth/callback`) to
-the Google OAuth client's authorized redirect URIs, and to Supabase's **Authentication >
-URL Configuration > Redirect URLs** allow-list — otherwise Google sign-in will fail in
-production even though it works locally.
+Schema changes live in `supabase/schema.sql` — run the whole file in the Supabase SQL
+editor any time it changes; every statement is idempotent (`if not exists` / `or replace`),
+safe to re-run.
 
 ## How it's organized
 
 ```
 app/
-  page.tsx                     the whole UI: Add Posting / Search / Dream Company tabs
+  page.tsx                     public landing page (marketing copy, Sign In)
+  dashboard/page.tsx            the app itself: Add Posting / Search / Dream Company tabs
   login/page.tsx                .edu-gated sign-in (magic link + Google)
   admin/page.tsx                 moderation view: reported postings, remove/restore
   auth/callback/route.ts        exchanges the auth code for a session
@@ -125,9 +57,9 @@ lib/
   supabase-server.ts            anon-key Supabase client + cookies, for route handlers
   rate-limit.ts                  Upstash-backed rate limiter for the Groq/postings routes
   admin.ts                       checks a user's email against ADMIN_EMAILS
-middleware.ts                    redirects unauthenticated requests to /login, gates /admin
+middleware.ts                    gates /dashboard and /admin behind auth; / and /login stay public
 supabase/
-  schema.sql                    run this once in the Supabase SQL editor
+  schema.sql                    source of truth for the DB schema — run it after any change
 ```
 
 ## Known v1 tradeoffs (worth knowing, not bugs)
