@@ -33,19 +33,20 @@ export async function middleware(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
+  const isRoot = req.nextUrl.pathname === '/';
+  const isPublic = isRoot || PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p));
 
   if (!user && !isPublic) {
     const redirectUrl = new URL('/login', req.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && req.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/', req.url));
+  if (user && (req.nextUrl.pathname === '/login' || isRoot)) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   if (req.nextUrl.pathname.startsWith('/admin') && !isAdmin(user?.email)) {
-    return NextResponse.redirect(new URL('/', req.url));
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
   return res;
