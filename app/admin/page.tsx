@@ -66,7 +66,7 @@ export default function AdminPage() {
 
         {!loading &&
           (postings ?? []).map((p) => (
-            <div key={p.id} className="border border-hairline rounded-lg px-4 py-3.5 mb-2.5 bg-surface">
+            <div key={p.id} className="border border-hairline rounded-lg px-6 py-4 mb-2.5 bg-surface">
               <div className="flex justify-between items-start gap-2.5 flex-wrap">
                 <div>
                   <span className="font-display font-semibold text-[15px]">{p.company}</span>
