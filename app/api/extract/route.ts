@@ -33,6 +33,7 @@ ${text.slice(0, 8000)}
     const parsed = JSON.parse(raw);
     return NextResponse.json(parsed);
   } catch (err: any) {
+    console.error('extract error:', err);
     return NextResponse.json({ error: err.message ?? 'Extraction failed.' }, { status: 500 });
   }
 }
