@@ -29,6 +29,7 @@ Return ONLY valid JSON, no markdown fences, no preamble, matching exactly this s
     const parsed = JSON.parse(raw);
     return NextResponse.json(parsed);
   } catch (err: any) {
+    console.error('projects error:', err);
     return NextResponse.json({ error: err.message ?? 'Project generation failed.' }, { status: 500 });
   }
 }
