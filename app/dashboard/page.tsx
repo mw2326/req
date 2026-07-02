@@ -369,7 +369,7 @@ export default function Page() {
                   </div>
                   <button
                     onClick={confirmAdd}
-                    className="font-mono text-[11px] uppercase bg-amber text-[#14161b] font-semibold px-4.5 py-1.5 rounded"
+                    className="font-mono text-[11px] uppercase bg-amber text-[#14161b] font-semibold px-5 py-1.5 rounded"
                   >
                     Add to database
                   </button>
@@ -583,7 +583,7 @@ export default function Page() {
                 />
                 <button
                   onClick={addSkill}
-                  className="font-mono text-[11px] uppercase border border-hairline px-4.5 py-1.5 rounded hover:border-ink2"
+                  className="font-mono text-[11px] uppercase border border-hairline px-5 py-1.5 rounded hover:border-ink2"
                 >
                   Add
                 </button>
