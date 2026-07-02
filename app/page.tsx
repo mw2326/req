@@ -33,7 +33,7 @@ export default function LandingPage() {
           </div>
           <Link
             href="/login"
-            className="font-mono text-[12px] uppercase tracking-wide border border-hairline px-6.5 py-2 rounded hover:border-ink2"
+            className="font-mono text-[12px] uppercase tracking-wide border border-hairline px-7 py-2 rounded hover:border-ink2"
           >
             Sign in
           </Link>
