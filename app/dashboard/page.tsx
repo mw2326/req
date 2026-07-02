@@ -362,7 +362,7 @@ export default function Page() {
 
             {result && (
               <div className="mt-6 border border-hairline rounded-lg bg-surface overflow-hidden">
-                <div className="px-4.5 py-4 border-b border-hairline flex justify-between items-start flex-wrap gap-2">
+                <div className="px-6 py-4 border-b border-hairline flex justify-between items-start flex-wrap gap-2">
                   <div>
                     <div className="font-display font-semibold text-[17px]">{result.company}</div>
                     <div className="text-ink2 text-[13px] mt-0.5">{result.role}</div>
@@ -375,10 +375,10 @@ export default function Page() {
                   </button>
                 </div>
                 <div
-                  className="px-4.5 py-4 max-h-[220px] overflow-y-auto font-mono text-[12.5px] leading-[1.8] text-ink2 border-b border-hairline whitespace-pre-wrap"
+                  className="px-6 py-4 max-h-[220px] overflow-y-auto font-mono text-[12.5px] leading-[1.8] text-ink2 border-b border-hairline whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{ __html: highlight(jdText, result.skills) }}
                 />
-                <div className="px-4.5 py-4 flex flex-wrap gap-1.5">
+                <div className="px-6 py-4 flex flex-wrap gap-1.5">
                   {result.skills.map((s) => (
                     <Chip key={s}>{s}</Chip>
                   ))}
@@ -456,7 +456,7 @@ export default function Page() {
                 </div>
 
                 {searchResults.slice(0, 25).map((p) => (
-                  <div key={p.id} className="border border-hairline rounded-lg px-4 py-3.5 mb-2.5 bg-surface">
+                  <div key={p.id} className="border border-hairline rounded-lg px-6 py-4 mb-2.5 bg-surface">
                     <div className="flex justify-between items-baseline gap-2.5 flex-wrap">
                       <div>
                         <span className="font-display font-semibold text-[15px]">{p.company}</span>
@@ -626,7 +626,7 @@ export default function Page() {
                     {projects.map((p) => (
                       <div
                         key={p.title}
-                        className="border border-hairline border-l-[3px] border-l-amber rounded px-4 py-3.5 mb-2.5 bg-surface"
+                        className="border border-hairline border-l-[3px] border-l-amber rounded px-6 py-4 mb-2.5 bg-surface"
                       >
                         <div className="font-display font-semibold text-[14.5px] mb-1">{p.title}</div>
                         <div className="text-[13px] text-ink2 leading-relaxed mb-2">{p.description}</div>
@@ -644,7 +644,7 @@ export default function Page() {
       </div>
 
       {toast && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-surface2 border border-hairline text-white font-mono text-[12.5px] px-4.5 py-2.5 rounded-lg shadow-xl z-50">
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-surface2 border border-hairline text-white font-mono text-[12.5px] px-5 py-2.5 rounded-lg shadow-xl z-50">
           {toast}
         </div>
       )}
