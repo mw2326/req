@@ -24,7 +24,13 @@ for rate limiting, deployed on Vercel.
   - `@supabase/ssr` — cookie-based session handling across middleware, Server Components,
     and Route Handlers
 - **Groq** (`llama-3.3-70b-versatile`) — extracts `{company, role, skills}` from pasted job
-  postings and generates project ideas that close a skill gap
+  postings, extracts skills from an uploaded resume PDF, and generates project ideas that
+  close a skill gap
+- **`pg_trgm` (Postgres)** — fuzzy-matches newly added companies/skills against everything
+  already in the database, so "Google" and "Google Inc." collapse into one canonical name
+  instead of being treated as unrelated
+- **`pdf-parse`** — extracts text from an uploaded resume PDF server-side, before handing
+  it to Groq for skill extraction
 - **Upstash Redis + `@upstash/ratelimit`** — per-user sliding-window rate limiting on the
   Groq-calling routes and posting creation
 - **Vercel** — hosting, deploys on push to `main`, edge middleware for the auth/admin gate
@@ -69,6 +75,7 @@ app/
   api/admin/postings/route.ts   admin-only: list postings with report counts
   api/admin/postings/[id]/route.ts  admin-only: set a posting's status
   api/profile/route.ts         reads/writes the signed-in user's skills + dream company
+  api/resume/route.ts           parses an uploaded resume PDF, returns extracted skills
 lib/
   groq.ts                       Groq API wrapper (server-side only)
   supabase.ts                   service-role Supabase client, for the shared postings table
@@ -76,6 +83,7 @@ lib/
   supabase-server.ts            anon-key Supabase client + cookies, for route handlers
   rate-limit.ts                  Upstash-backed rate limiter for the Groq/postings routes
   admin.ts                       checks a user's email against ADMIN_EMAILS
+  normalize.ts                   fuzzy-matches a company/skill against existing DB values
 middleware.ts                    gates /dashboard and /admin behind auth; / and /login stay public
 supabase/
   schema.sql                    source of truth for the DB schema — run it after any change
@@ -83,9 +91,11 @@ supabase/
 
 ## Known v1 tradeoffs (worth knowing, not bugs)
 
-- **Company matching is substring-based.** Searching "Google" won't automatically merge
-  with a posting saved as "Alphabet/Google LLC". A cleanup pass or a canonical-company
-  table would fix this later.
+- **Company/skill normalization is fuzzy-matched, going forward only.** New postings are
+  matched against a growing `companies`/`skills` reference table via Postgres trigram
+  similarity, so close variants collapse into one canonical name — but existing `postings`
+  rows are never rewritten, and skills of 2 characters or fewer (e.g. "Go", "R") skip fuzzy
+  matching entirely since trigram similarity on strings that short is unreliable.
 - **The `.edu` check only runs at account creation.** The Postgres trigger blocks new
   signups with a non-`.edu` email, but doesn't re-verify existing accounts on every login
   (not an issue in practice, since no non-`.edu` account can ever be created).

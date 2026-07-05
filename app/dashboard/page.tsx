@@ -110,6 +110,8 @@ export default function Page() {
   const [skillInput, setSkillInput] = useState('');
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [genLoading, setGenLoading] = useState(false);
+  const [resumeSkills, setResumeSkills] = useState<string[] | null>(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -248,6 +250,34 @@ export default function Page() {
     const next = { ...profile, mySkills: profile.mySkills.filter((s) => s !== skill) };
     setProfile(next);
     saveProfile(next);
+  }
+
+  async function handleResumeUpload(file: File) {
+    setResumeUploading(true);
+    setResumeSkills(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/resume', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setResumeSkills(Array.isArray(data) ? data : []);
+    } catch {
+      showToast('Could not parse resume — try again');
+    } finally {
+      setResumeUploading(false);
+    }
+  }
+
+  function confirmResumeSkills() {
+    if (!resumeSkills) return;
+    const existing = new Set(profile.mySkills.map(normSkill));
+    const merged = [...profile.mySkills, ...resumeSkills.filter((s) => !existing.has(normSkill(s)))];
+    const next = { ...profile, mySkills: merged };
+    setProfile(next);
+    saveProfile(next);
+    setResumeSkills(null);
+    showToast('Added skills from your resume');
   }
 
   async function generateProjects(gapLabels: string[]) {
@@ -573,7 +603,7 @@ export default function Page() {
 
             <div className="mt-6 pt-5 border-t border-hairline">
               <h3 className="font-mono text-[11px] uppercase text-ink2 tracking-wide mb-2.5">Your skills</h3>
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-2 mb-3 flex-wrap">
                 <input
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
@@ -587,7 +617,45 @@ export default function Page() {
                 >
                   Add
                 </button>
+                <label className="font-mono text-[11px] uppercase border border-hairline px-5 py-1.5 rounded hover:border-ink2 cursor-pointer">
+                  {resumeUploading ? 'Uploading…' : 'Upload resume (PDF)'}
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    disabled={resumeUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleResumeUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
               </div>
+
+              {resumeSkills && (
+                <div className="border border-hairline rounded-lg bg-surface px-6 py-4 mb-3">
+                  <div className="font-mono text-[11px] uppercase text-ink2 tracking-wide mb-2.5">
+                    Found in your resume
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {resumeSkills.length ? (
+                      resumeSkills.map((s) => <Chip key={s}>{s}</Chip>)
+                    ) : (
+                      <span className="text-ink2 text-[12.5px]">No skills found.</span>
+                    )}
+                  </div>
+                  {resumeSkills.length > 0 && (
+                    <button
+                      onClick={confirmResumeSkills}
+                      className="font-mono text-[11px] uppercase bg-amber text-[#14161b] font-semibold px-5 py-1.5 rounded"
+                    >
+                      Confirm & add to your skills
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-1.5">
                 {profile.mySkills.length ? (
                   profile.mySkills.map((s) => (

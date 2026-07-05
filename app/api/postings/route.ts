@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/supabase';
 import { getUser } from '@/lib/supabase-server';
 import { checkRateLimit, getPostLimiter } from '@/lib/rate-limit';
+import { resolveCompany, resolveSkill } from '@/lib/normalize';
 
 export async function GET(req: NextRequest) {
   try {
@@ -57,9 +58,20 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabase();
+    const [canonicalCompany, canonicalSkills] = await Promise.all([
+      resolveCompany(supabase, company),
+      Promise.all(skills.map((s: string) => resolveSkill(supabase, s))),
+    ]);
+
     const { data, error } = await supabase
       .from('postings')
-      .insert({ company, role, skills, raw_text: (rawText ?? '').slice(0, 4000), user_id: user.id })
+      .insert({
+        company: canonicalCompany,
+        role,
+        skills: canonicalSkills,
+        raw_text: (rawText ?? '').slice(0, 4000),
+        user_id: user.id,
+      })
       .select()
       .single();
 
