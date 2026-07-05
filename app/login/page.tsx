@@ -72,7 +72,7 @@ function LoginForm() {
           RE<span className="text-amber">Q</span>
         </div>
         <div className="font-mono text-xs text-ink2 text-center mb-8">
-          // for verified students — .edu email required
+          {'// for verified students — .edu email required'}
         </div>
 
         <div className="border border-hairline rounded-lg bg-surface p-5">
