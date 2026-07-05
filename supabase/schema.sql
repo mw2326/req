@@ -148,3 +148,31 @@ begin
   return input;
 end;
 $$ language plpgsql;
+
+-- Admin-only fixes for normalization mistakes: fuzzy matching isn't perfect,
+-- so this lets an admin correct an under-merge (two spellings that should be
+-- one) or over-merge (two different things that got collapsed) by renaming
+-- or merging a canonical entry. Handles rename and merge identically — the
+-- postings update is the same whether new_name is brand-new or already
+-- exists.
+create or replace function admin_merge_company(old_name text, new_name text)
+returns void as $$
+begin
+  update postings set company = new_name where company = old_name;
+  insert into companies (canonical_name) values (new_name) on conflict (canonical_name) do nothing;
+  if old_name <> new_name then
+    delete from companies where canonical_name = old_name;
+  end if;
+end;
+$$ language plpgsql;
+
+create or replace function admin_merge_skill(old_name text, new_name text)
+returns void as $$
+begin
+  update postings set skills = array_replace(skills, old_name, new_name) where old_name = any(skills);
+  insert into skills (canonical_name) values (new_name) on conflict (canonical_name) do nothing;
+  if old_name <> new_name then
+    delete from skills where canonical_name = old_name;
+  end if;
+end;
+$$ language plpgsql;
