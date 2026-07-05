@@ -77,3 +77,74 @@ create table if not exists reports (
 alter table reports enable row level security;
 -- No policies: reports/postings moderation always goes through server
 -- routes using the service-role client, same pattern as postings itself.
+
+-- Company/skill normalization: fuzzy-matches new postings against everything
+-- already seen, so "Google" and "Google Inc." collapse into one canonical
+-- name instead of the substring matching in the postings GET route treating
+-- them as unrelated. Going-forward only — existing postings rows are never
+-- rewritten, only the reference tables below grow over time.
+create extension if not exists pg_trgm;
+
+create table if not exists companies (
+  id uuid primary key default gen_random_uuid(),
+  canonical_name text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists companies_trgm_idx on companies using gin (canonical_name gin_trgm_ops);
+alter table companies enable row level security;
+-- No policies: only the service-role client (via resolve_company/resolve_skill,
+-- called from the postings POST route) touches these tables, same pattern as
+-- postings/reports. Without this, Supabase's auto-generated API would let any
+-- anon/authenticated client read and write this table directly.
+
+create table if not exists skills (
+  id uuid primary key default gen_random_uuid(),
+  canonical_name text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists skills_trgm_idx on skills using gin (canonical_name gin_trgm_ops);
+alter table skills enable row level security;
+
+-- Seed both from whatever's already in postings, so new postings get matched
+-- against history from day one. Only reads existing postings to populate
+-- these new reference tables — does not modify any postings row.
+insert into companies (canonical_name)
+  select distinct company from postings on conflict (canonical_name) do nothing;
+insert into skills (canonical_name)
+  select distinct unnest(skills) from postings on conflict (canonical_name) do nothing;
+
+-- Returns an existing canonical name if one is similar enough, otherwise
+-- registers `input` as a new canonical name and returns it unchanged.
+create or replace function resolve_company(input text)
+returns text as $$
+declare
+  existing text;
+begin
+  select canonical_name into existing from companies
+    where similarity(canonical_name, input) > 0.35
+    order by similarity(canonical_name, input) desc limit 1;
+  if existing is not null then return existing; end if;
+  insert into companies (canonical_name) values (input) on conflict (canonical_name) do nothing;
+  return input;
+end;
+$$ language plpgsql;
+
+create or replace function resolve_skill(input text)
+returns text as $$
+declare
+  existing text;
+begin
+  -- Skip fuzzy matching for very short skills (e.g. "Go", "R", "C") where
+  -- trigram similarity is unreliable and prone to false positives.
+  if length(input) <= 2 then
+    insert into skills (canonical_name) values (input) on conflict (canonical_name) do nothing;
+    return input;
+  end if;
+  select canonical_name into existing from skills
+    where similarity(canonical_name, input) > 0.45
+    order by similarity(canonical_name, input) desc limit 1;
+  if existing is not null then return existing; end if;
+  insert into skills (canonical_name) values (input) on conflict (canonical_name) do nothing;
+  return input;
+end;
+$$ language plpgsql;
