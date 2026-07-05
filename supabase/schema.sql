@@ -91,6 +91,11 @@ create table if not exists companies (
   created_at timestamptz not null default now()
 );
 create index if not exists companies_trgm_idx on companies using gin (canonical_name gin_trgm_ops);
+alter table companies enable row level security;
+-- No policies: only the service-role client (via resolve_company/resolve_skill,
+-- called from the postings POST route) touches these tables, same pattern as
+-- postings/reports. Without this, Supabase's auto-generated API would let any
+-- anon/authenticated client read and write this table directly.
 
 create table if not exists skills (
   id uuid primary key default gen_random_uuid(),
@@ -98,6 +103,7 @@ create table if not exists skills (
   created_at timestamptz not null default now()
 );
 create index if not exists skills_trgm_idx on skills using gin (canonical_name gin_trgm_ops);
+alter table skills enable row level security;
 
 -- Seed both from whatever's already in postings, so new postings get matched
 -- against history from day one. Only reads existing postings to populate
