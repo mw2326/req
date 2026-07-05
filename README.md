@@ -74,6 +74,10 @@ app/
   api/postings/[id]/report/route.ts  logs a report against a posting
   api/admin/postings/route.ts   admin-only: list postings with report counts
   api/admin/postings/[id]/route.ts  admin-only: set a posting's status
+  api/admin/companies/route.ts   admin-only: list canonical companies with posting counts
+  api/admin/companies/merge/route.ts  admin-only: merge/rename a canonical company
+  api/admin/skills/route.ts      admin-only: list canonical skills with posting counts
+  api/admin/skills/merge/route.ts  admin-only: merge/rename a canonical skill
   api/profile/route.ts         reads/writes the signed-in user's skills + dream company
   api/resume/route.ts           parses an uploaded resume PDF, returns extracted skills
 lib/
