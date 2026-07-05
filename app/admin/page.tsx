@@ -59,7 +59,7 @@ export default function AdminPage() {
       <div className="max-w-[1470px] mx-auto px-5 pt-7 pb-20">
         <h1 className="font-display font-semibold text-[19px] mb-1">Moderation</h1>
         <p className="text-ink2 text-[13.5px] leading-relaxed mb-6">
-          Postings sorted by report count. Removing hides a posting from Search / Dream Company; it's reversible.
+          Postings sorted by report count. Removing hides a posting from Search / Dream Company; it&apos;s reversible.
         </p>
 
         {loading && <div className="font-mono text-xs text-ink2">loading…</div>}
@@ -96,7 +96,7 @@ export default function AdminPage() {
               {p.reportReasons.length > 0 && (
                 <div className="mt-2.5 font-mono text-[11px] text-ink2 leading-relaxed">
                   {p.reportReasons.map((r, i) => (
-                    <div key={i}>"{r}"</div>
+                    <div key={i}>&quot;{r}&quot;</div>
                   ))}
                 </div>
               )}

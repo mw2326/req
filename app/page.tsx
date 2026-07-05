@@ -28,7 +28,7 @@ export default function LandingPage() {
               RE<span className="text-amber">Q</span>
             </div>
             <div className="font-mono text-xs text-ink2 hidden sm:block">
-              // requirement intelligence, crowdsourced
+              {'// requirement intelligence, crowdsourced'}
             </div>
           </div>
           <Link

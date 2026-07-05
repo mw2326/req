@@ -331,7 +331,7 @@ export default function Page() {
             <div className="font-display font-bold text-[22px] tracking-tight">
               RE<span className="text-amber">Q</span>
             </div>
-            <div className="font-mono text-xs text-ink2">// requirement intelligence, crowdsourced</div>
+            <div className="font-mono text-xs text-ink2">{'// requirement intelligence, crowdsourced'}</div>
           </div>
           <div className="flex items-center gap-3.5">
             <div className="font-mono text-[11px] text-ink2">
